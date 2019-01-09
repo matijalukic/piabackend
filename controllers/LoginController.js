@@ -11,11 +11,9 @@ const Admins = new admins(sequelize, Sequelize);
 
 /**
  * Login post request
- * @param req
- * @param res
+ * @param req Request 
+ * @param res Response 
  */
-
-
 module.exports.login = function(req, res){
     var username = req.query.username;
     var password = req.query.password;

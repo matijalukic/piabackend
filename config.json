@@ -1,4 +1,8 @@
 {
-  "secret" : "cica maca"
+  "secret" : "cica maca",
+  "db" : "jobfair",
+  "username" : "root", 
+  "password": "",
+  "dialect": "mysql"
 
 }
