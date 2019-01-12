@@ -27,6 +27,26 @@ module.exports = function(sequelize, DataTypes) {
     about: {
       type: DataTypes.TEXT,
       allowNull: false
+    },
+    startCV: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    endCV: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    startParticipate: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    endParticipate: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    images: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     tableName: 'fairs',

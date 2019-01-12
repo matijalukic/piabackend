@@ -60,5 +60,8 @@ router.post('/newpackages', bodyParser.json(), AdminController.newpackagesValida
 // import json fairs 
 router.post('/importfairs', bodyParser.json(), AdminController.importFairs);
 
+// upload images
+router.post('/uploadimage', AdminController.uploadImage);
+
 // export router 
 module.exports = router;

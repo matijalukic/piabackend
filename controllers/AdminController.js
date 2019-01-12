@@ -1,4 +1,6 @@
 const Sequelize = require('sequelize');
+const IncomingForm = require('formidable').IncomingForm;
+const fs = require('fs');
 const { check, validationResult } = require('express-validator/check');
 const Config = require('../config.json');
 const fairs = require('../models/fairs.js');
@@ -44,28 +46,24 @@ module.exports.newfair = async function(req, res){
 			throw "Ending time is before start time!";
 
 		// return error if the latest fair has not ended
-		await Fair.findOne({
+		let latestFair = await Fair.findOne({
 			where: { end: { $gt: new Date().toISOString() } }
-		}).then((latestFair) => {
-			if(latestFair){
-				throw "The latest fair is still going!";
-			}
-
-			else // Create fair if there is no fairs that are still going
-					
-					Fair.create({
-						name: req.query.name,
-						start: req.query.start,
-						end: req.query.end,
-						place: req.query.place,
-						about: req.query.about,
-					});
-					res.status(200).json({ successMessage: 'The Fair has been created!'});
-			
-				
-				
-		
 		});
+		
+		if(latestFair){
+			throw "The latest fair is still going!";
+		}
+
+		else{ // Create fair if there is no fairs that are still going
+			await Fair.create({
+				name: req.query.name,
+				start: req.query.start,
+				end: req.query.end,
+				place: req.query.place,
+				about: req.query.about,
+			});
+			res.status(200).json({ successMessage: 'The Fair has been created!'});
+		}
 	
 	}
 	catch(err){
@@ -236,3 +234,53 @@ module.exports.importFairs = async function(req, res){
 	}
 
 }
+
+/**
+ * 	Upload Image of fair
+ * 	@return { imageName: $path }
+ */
+module.exports.uploadImage = function(req, res){
+	let returnedFile;
+	let form = new IncomingForm();
+	let everythingOk = true;
+
+	// when the file is received
+	form.on('file', (field, file) => {
+		let allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+		// if the type of the file is not allowed
+		if(allowedTypes.indexOf(file.type) == -1){
+			console.log('Type is not allowed: ' + file.type + '!');
+			
+			// remove file from the temp
+			fs.unlinkSync(file.path);
+			everythingOk = false;
+		}
+		// file is allowed type
+		else {
+			// move from TMP folder to this folder
+			fs.renameSync(file.path, './images/' + file.name, (err) => {
+				res.status(403).json({errorMessage: 'File didnt upload!'});
+				console.log(err);
+			})
+
+			returnedFile = file.name;
+			console.log('File uploaded' + returnedFile);
+		}
+	
+	});
+
+	form.on('error', function(err) {
+		res.status(403).json({errorMessage: `Didn't received the files: ${err}` });
+	});
+
+	form.on('end', () => {
+		if(everythingOk)
+			res.status(200).json({imageName: returnedFile, successMessage: 'Uspesno ste dodali fajl!'});
+		else 
+			res.status(403).json({errorMessage: 'Nedozvoljena ekstenzija!'});
+
+	});
+
+	form.parse(req);
+} 
