@@ -15,6 +15,22 @@ module.exports = function(sequelize, DataTypes) {
     price: {
       type: DataTypes.INTEGER(11),
       allowNull: false
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    fair_id: {
+      type: DataTypes.INTEGER(11),
+      allowNull: false,
+      references: {
+        model: 'fairs',
+        key: 'id'
+      }
     }
   }, {
     tableName: 'additionals'

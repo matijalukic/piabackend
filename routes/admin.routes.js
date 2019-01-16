@@ -42,17 +42,18 @@ router.use(function(req, res, next){
             })
         }
         catch(err){
-            res.status.json( {errorMessage: 'Token is not valid'} )
+            res.status(403).json( {errorMessage: 'Token is not valid'} )
         }
     }
     else 
         res.status(403).json({ errorMessage : 'Missing token authorization'} );
 });
 
+
 // /admin/fairs
 router.get('/fairs', FairController.fairs);
 // new fair 
-router.post('/newfair', AdminController.newfairValidation, AdminController.newfair);
+router.post('/newfair', bodyParser.json(), AdminController.newfairValidation, AdminController.newfair);
 
 // import json packages
 router.post('/newpackages', bodyParser.json(), AdminController.newpackagesValidation, AdminController.newpackages);
@@ -62,6 +63,9 @@ router.post('/importfairs', bodyParser.json(), AdminController.importFairs);
 
 // upload images
 router.post('/uploadimage', AdminController.uploadImage);
+
+// get image
+router.get('/image', AdminController.getImage);
 
 // export router 
 module.exports = router;

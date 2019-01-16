@@ -2,6 +2,9 @@ const Sequelize = require('sequelize');
 const IncomingForm = require('formidable').IncomingForm;
 const fs = require('fs');
 const { check, validationResult } = require('express-validator/check');
+const { sanitize } = require('express-validator/filter');
+
+
 const Config = require('../config.json');
 const fairs = require('../models/fairs.js');
 const packages  = require('../models/packages.js')
@@ -27,6 +30,15 @@ module.exports.newfairValidation = [
 	check('end', 'End date is not valid').exists().isISO8601(),
 	check('place', 'Place is not valid').exists(),
 	check('about', 'About value is not valid').exists(),
+	// check('startCV', 'Start CV date is invalid').isISO8601().isEmpty(),
+	// check('endCV', 'End CV date is invalid').isISO8601().isEmpty(),
+	// check('startParticipate', 'Start Participate date is invalid').isISO8601().isEmpty(),
+	// check('endParticipate', 'End Participate CV date is invalid').isISO8601().isEmpty(),
+];
+
+
+module.exports.newFairFilter = [
+
 ];
 
 /**
@@ -34,13 +46,30 @@ module.exports.newfairValidation = [
  */
 module.exports.newfair = async function(req, res){
 	const errors = validationResult(req);
+
+
 	if (!errors.isEmpty()) {
 	  return res.status(422).json({ errors: errors.array() });
 	}
 
+	// sanitize values 
+	if(req.body.startCV === "")
+		req.body.startCV = null;
+
+	if(req.body.endCV === "")
+		req.body.endCV = null;
+
+		
+	if(req.body.startParticipate === "")
+		req.body.startParticipate = null;
+
+	
+	if(req.body.endParticipate === "")
+		req.body.endParticipate = null;
+
 	try{
-		let startDate = new Date(req.query.start);
-		let endDate = new Date(req.query.end);
+		let startDate = new Date(req.body.start);
+		let endDate = new Date(req.body.end);
 		// date check
 		if(startDate >= endDate)
 			throw "Ending time is before start time!";
@@ -55,20 +84,59 @@ module.exports.newfair = async function(req, res){
 		}
 
 		else{ // Create fair if there is no fairs that are still going
-			await Fair.create({
-				name: req.query.name,
-				start: req.query.start,
-				end: req.query.end,
-				place: req.query.place,
-				about: req.query.about,
-			});
-			res.status(200).json({ successMessage: 'The Fair has been created!'});
+			let newFair = await Fair.create(req.body);
+
+			if(newFair)
+				res.status(200).json(
+					{
+						newInsertedFair: newFair,  
+						successMessage: 'The Fair has been created!'
+					});
+			else 
+				res.status(403).json({errorMessage: 'The Fairs has not been inserted'});
 		}
 	
 	}
 	catch(err){
-		res.status(402).json({ errorMessage: err});
+		res.status(403).json({ errorMessage: err});
 	}	
+}
+
+/**
+ * Getting image from the folder
+ */
+module.exports.getImage = (req, res, next) => {
+	let imageName = req.query.name;
+	console.log('Searching for image: ' + imageName);
+	try{
+		var options = {
+			root: __dirname + '/../images/',
+			dotfiles: 'deny',
+			headers: {
+				'x-timestamp': Date.now(),
+				'x-sent': true
+			}
+		  };
+
+		  if(!fs.existsSync('./images/' + imageName))
+		  	throw "Image not founded";
+
+		res.status(200).sendFile(imageName, options, (err) => {
+			if(err)
+				next(err);
+			else 
+				console.log('It\'s with the file!'); 
+			// if(err)
+			// 	next(err)
+			// 	else 
+			// throw err;
+		});
+	}
+	catch(err){
+		res.status(404).json({
+			errorMessage: 'There is no image under that name!' + err
+		})
+	}
 }
 
 /**
@@ -151,6 +219,7 @@ module.exports.newpackages = async function(req, res){
 			await Additional.create({
 				title: currentAdditional.Title,
 				price: currentAdditional.Price,
+				fair_id: req.query.fair_id
 			})
 			.catch(err => {
 				throw err;
@@ -159,12 +228,13 @@ module.exports.newpackages = async function(req, res){
 
 		
 
-		res.json({ success: 'The packages has been imported!'});
+		res.json({ successMessage: 'The packages has been imported!'});
 
 
 	}
 	catch(err){
-		return res.status(422).json({ errorMessage: err });
+		console.log('Importing packages errror:' + err);
+		return res.status(403).json({ errorMessage: err });
 	}
 }
 
