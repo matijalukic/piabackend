@@ -22,7 +22,6 @@ module.exports = function(sequelize, DataTypes) {
       unique: true
     }
   }, {
-    tableName: 'locations',
-    timestamps: false
+    tableName: 'locations'
   });
 };

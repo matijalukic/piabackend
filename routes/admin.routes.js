@@ -67,5 +67,12 @@ router.post('/uploadimage', AdminController.uploadImage);
 // get image
 router.get('/image', AdminController.getImage);
 
+// allowing/forbid permit
+router.get('/allowpermit', AdminController.allowPermitValidation, AdminController.allowPermit);
+router.get('/forbidpermit', AdminController.allowPermitValidation, AdminController.forbidPermit);
+
+// list permits of the fair
+router.get('/fair/permits', AdminController.permitsValidation, AdminController.permitsOfFair);
+
 // export router 
 module.exports = router;

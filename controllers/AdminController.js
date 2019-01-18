@@ -11,7 +11,9 @@ const packages  = require('../models/packages.js')
 const additionals  = require('../models/additionals.js');
 const items  = require('../models/items.js');
 const locations  = require('../models/locations.js');
-
+const permits  = require('../models/permits.js');
+const companies = require('../models/companies.js');
+const permitAdditionals = require('../models/permit_additionals.js');
 
 const sequelize = new Sequelize(Config.db, Config.username, Config.password, {dialect: Config.dialect});
 
@@ -20,6 +22,16 @@ const Additional = new additionals(sequelize, Sequelize);
 const Item = new items(sequelize, Sequelize);
 const Package = new packages(sequelize, Sequelize);
 const Locat = new locations(sequelize, Sequelize);
+const Permit = new permits(sequelize, Sequelize);
+const Company = new companies(sequelize, Sequelize);
+const PermitAdditional = new permitAdditionals(sequelize, Sequelize);
+
+
+//Fair.hasMany(Permit, {foreignKey: 'fair_id', sourceKey: 'id'});
+Permit.belongsTo(Company, { foreignKey: 'company_id'});
+Permit.belongsTo(Package, { foreignKey: 'package_id'});
+Fair.belongsToMany(Company, { through: Permit, foreignKey: 'fair_id', otherKey: 'company_id' });
+Permit.belongsToMany(Additional, { through: PermitAdditional, foreignKey: 'permit_id', otherKey: 'additional_id'});
 
 /**
  * Validation rules for inserting new fair
@@ -354,3 +366,94 @@ module.exports.uploadImage = function(req, res){
 
 	form.parse(req);
 } 
+
+/**
+ * GET request for allowing company permits
+ */
+module.exports.allowPermitValidation = [
+	check('id', 'There is no selected Permit!').exists(),
+];
+module.exports.allowPermit = async (req, res) => {
+	try{
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			throw errors.array()[0].msg;
+		}
+
+		let changingPermit = await Permit.findByPk(req.query.id);
+
+		if(!changingPermit)
+			throw "There is no Permit under that id";
+			
+		changingPermit.allowed = 1;
+		changingPermit.save();
+
+		res.json({
+			successMessage: 'Allowing permit is successfull!'
+		});
+	}	
+	catch(e){
+		res.status(403).json({
+			errorMessage: e
+		});
+	}
+}
+module.exports.forbidPermit = async (req, res) => {
+	try{
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			throw errors.array()[0].msg;
+		}
+
+		let changingPermit = await Permit.findByPk(req.query.id);
+
+		if(!changingPermit)
+			throw "There is no Permit under that id";
+			
+		changingPermit.allowed = 0; // forbid permit
+		changingPermit.save();
+
+		res.json({
+			successMessage: 'Forbiding permit is successfull!'
+		});
+	}	
+	catch(e){
+		res.status(403).json({
+			errorMessage: e
+		});
+	}
+}
+
+
+
+module.exports.permitsValidation = [
+	check('fair_id', 'Fair id doesnt exists').exists(),
+];
+
+/**
+ * Returns the list of the permits with the companies
+ *
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
+module.exports.permitsOfFair = async (req, res) => {
+	try{
+		// check for errors
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			throw errors.array()[0].msg;
+		}
+
+		let permitsOfFair = await Permit.findAll({
+			where: { fair_id: req.query.fair_id },
+			include: [Company, Additional, Package]
+		});
+
+		res.json(permitsOfFair);
+	}
+	catch (e) {
+		res.status(403).json({errorMessage: e});
+	}
+
+}

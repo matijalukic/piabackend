@@ -1,24 +1,20 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('items', {
+  return sequelize.define('permit_additionals', {
     id: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
       primaryKey: true,
       autoIncrement: true
     },
-    package_id: {
+    permit_id: {
       type: DataTypes.INTEGER(11),
-      allowNull: false,
-      references: {
-        model: 'packages',
-        key: 'id'
-      }
+      allowNull: false
     },
-    title: {
-      type: DataTypes.STRING(50),
-      allowNull: true
+    additional_id: {
+      type: DataTypes.INTEGER(11),
+      allowNull: false
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -29,6 +25,6 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     }
   }, {
-    tableName: 'items'
+    tableName: 'permit_additionals'
   });
 };

@@ -43,6 +43,14 @@ module.exports = function(sequelize, DataTypes) {
         model: 'fairs',
         key: 'id'
       }
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'packages'

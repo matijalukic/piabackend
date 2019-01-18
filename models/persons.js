@@ -24,7 +24,6 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: '0'
     }
   }, {
-    tableName: 'persons',
-    timestamps: false
+    tableName: 'persons'
   });
 };

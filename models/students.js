@@ -19,7 +19,6 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: '0'
     }
   }, {
-    tableName: 'students',
-    timestamps: false 
+    tableName: 'students'
   });
 };

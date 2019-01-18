@@ -49,7 +49,6 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     }
   }, {
-    tableName: 'fairs',
-    timestamps: false,
+    tableName: 'fairs'
   });
 };

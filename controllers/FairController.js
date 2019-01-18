@@ -6,8 +6,14 @@ const Fair = new fairs(sequelize, Sequelize);
 
 
 module.exports.fairs = (req, res) => {
-    Fair.findAll()
-        .then((fairs) => {
-            res.status(200).json(fairs);
-        });
+    try {
+        Fair.findAll()
+            .then((fairs) => {
+                res.status(200).json(fairs);
+            });
+    }
+    catch (e) {
+        console.log('FairController::fairs:' + e);
+        res.status(403).json({errorMessage: e});
+    }
 };

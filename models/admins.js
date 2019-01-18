@@ -12,7 +12,6 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   }, {
-    tableName: 'admins',
-	timestamps: false,
+    tableName: 'admins'
   });
 };
