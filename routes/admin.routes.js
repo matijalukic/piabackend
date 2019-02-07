@@ -69,7 +69,7 @@ router.get('/image', AdminController.getImage);
 
 // allowing/forbid permit
 router.get('/allowpermit', AdminController.allowPermitValidation, AdminController.allowPermit);
-router.get('/forbidpermit', AdminController.allowPermitValidation, AdminController.forbidPermit);
+router.get('/forbidpermit', AdminController.forbidPermitValidation, AdminController.forbidPermit);
 
 // list permits of the fair
 router.get('/fair/permits', AdminController.permitsValidation, AdminController.permitsOfFair);

@@ -24,6 +24,7 @@ const Package = new packages(sequelize, Sequelize);
 const Locat = new locations(sequelize, Sequelize);
 const Permit = new permits(sequelize, Sequelize);
 const Company = new companies(sequelize, Sequelize);
+const Location = new locations(sequelize, Sequelize);
 const PermitAdditional = new permitAdditionals(sequelize, Sequelize);
 
 
@@ -32,16 +33,16 @@ Permit.belongsTo(Company, { foreignKey: 'company_id'});
 Permit.belongsTo(Package, { foreignKey: 'package_id'});
 Fair.belongsToMany(Company, { through: Permit, foreignKey: 'fair_id', otherKey: 'company_id' });
 Permit.belongsToMany(Additional, { through: PermitAdditional, foreignKey: 'permit_id', otherKey: 'additional_id'});
-
+Permit.belongsTo(Location, { foreignKey: 'location_id'});
 /**
  * Validation rules for inserting new fair
  */
 module.exports.newfairValidation = [
-	check('name', 'Name of the fair doesnt exist').exists(),
-	check('start', 'Start date is not valid').exists().isISO8601(),
-	check('end', 'End date is not valid').exists().isISO8601(),
-	check('place', 'Place is not valid').exists(),
-	check('about', 'About value is not valid').exists(),
+	check('fair.name', 'Name of the fair doesnt exist').exists(),
+	check('fair.start', 'Start date is not valid').exists().isISO8601(),
+	check('fair.end', 'End date is not valid').exists().isISO8601(),
+	check('fair.place', 'Place is not valid').exists(),
+	check('fair.about', 'About value is not valid').exists(),
 	// check('startCV', 'Start CV date is invalid').isISO8601().isEmpty(),
 	// check('endCV', 'End CV date is invalid').isISO8601().isEmpty(),
 	// check('startParticipate', 'Start Participate date is invalid').isISO8601().isEmpty(),
@@ -65,23 +66,25 @@ module.exports.newfair = async function(req, res){
 	}
 
 	// sanitize values 
-	if(req.body.startCV === "")
-		req.body.startCV = null;
+	if(req.body.fair.startCV === "")
+		req.body.fair.startCV = null;
 
-	if(req.body.endCV === "")
-		req.body.endCV = null;
+	if(req.body.fair.endCV === "")
+		req.body.fair.endCV = null;
 
 		
-	if(req.body.startParticipate === "")
-		req.body.startParticipate = null;
+	if(req.body.fair.startParticipate === "")
+		req.body.fair.startParticipate = null;
 
 	
-	if(req.body.endParticipate === "")
-		req.body.endParticipate = null;
+	if(req.body.fair.endParticipate === "")
+		req.body.fair.endParticipate = null;
 
 	try{
-		let startDate = new Date(req.body.start);
-		let endDate = new Date(req.body.end);
+		let creatingFair = req.body.fair;
+
+		let startDate = new Date(creatingFair.start);
+		let endDate = new Date(creatingFair.end);
 		// date check
 		if(startDate >= endDate)
 			throw "Ending time is before start time!";
@@ -96,7 +99,18 @@ module.exports.newfair = async function(req, res){
 		}
 
 		else{ // Create fair if there is no fairs that are still going
-			let newFair = await Fair.create(req.body);
+			let newFair = await Fair.create(creatingFair);
+
+			// create locations
+			let locations = req.body.locations;
+			for(let loc of locations){
+				Location.create(
+					{
+						fair_id: newFair.id,
+						name: loc
+					}
+				);
+			}
 
 			if(newFair)
 				res.status(200).json(
@@ -372,6 +386,7 @@ module.exports.uploadImage = function(req, res){
  */
 module.exports.allowPermitValidation = [
 	check('id', 'There is no selected Permit!').exists(),
+	check('location_id', 'The locations is not set').exists()
 ];
 module.exports.allowPermit = async (req, res) => {
 	try{
@@ -381,10 +396,24 @@ module.exports.allowPermit = async (req, res) => {
 		}
 
 		let changingPermit = await Permit.findByPk(req.query.id);
-
+		
 		if(!changingPermit)
 			throw "There is no Permit under that id";
-			
+
+		let packgeOfPermit = await Package.findOne({ where: { id:  changingPermit.package_id }});
+
+		if(!packgeOfPermit || packgeOfPermit.max_companies == 0 ) throw "There is fulfiled capacity of this package!";
+		
+		// decrease number of companies
+		if(packgeOfPermit > 0){
+			packageOfPermit.max_companies--;
+			packageOfPermit.save();
+		}		
+
+		let locationOfThePermit = await Location.findByPk(req.query.location_id);
+		if(!locationOfThePermit) throw "There is no location founded."
+
+		changingPermit.location_id = locationOfThePermit.id;
 		changingPermit.allowed = 1;
 		changingPermit.save();
 
@@ -393,11 +422,17 @@ module.exports.allowPermit = async (req, res) => {
 		});
 	}	
 	catch(e){
+		console.log(e);
 		res.status(403).json({
 			errorMessage: e
 		});
 	}
 }
+
+module.exports.forbidPermitValidation = [
+	check('id', 'The permit is not set!').exists(),
+];
+
 module.exports.forbidPermit = async (req, res) => {
 	try{
 		const errors = validationResult(req);
@@ -411,6 +446,7 @@ module.exports.forbidPermit = async (req, res) => {
 			throw "There is no Permit under that id";
 			
 		changingPermit.allowed = 0; // forbid permit
+		changingPermit.location_id = null;
 		changingPermit.save();
 
 		res.json({
@@ -447,7 +483,7 @@ module.exports.permitsOfFair = async (req, res) => {
 
 		let permitsOfFair = await Permit.findAll({
 			where: { fair_id: req.query.fair_id },
-			include: [Company, Additional, Package]
+			include: [Company, Additional, Package, Location]
 		});
 
 		res.json(permitsOfFair);

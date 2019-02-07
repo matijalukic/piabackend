@@ -20,6 +20,18 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(11),
       allowNull: false
     },
+    fair_id: {
+      type: DataTypes.INTEGER(11),
+      allowNull: false
+    },
+    location_id: {
+      type: DataTypes.INTEGER(11),
+      allowNull: true,
+      references: {
+        model: 'locations',
+        key: 'id'
+      }
+    },
     allowed: {
       type: DataTypes.INTEGER(4),
       allowNull: false,
@@ -32,10 +44,6 @@ module.exports = function(sequelize, DataTypes) {
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: true
-    },
-    fair_id: {
-      type: DataTypes.INTEGER(11),
-      allowNull: false
     }
   }, {
     tableName: 'permits'
