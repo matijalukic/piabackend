@@ -1,0 +1,38 @@
+{
+    "Fairs": [
+	{
+    "Fair": "JobFair2019",
+    "StartDate": "01/03/2019",
+    "EndDate": "03/03/2019",
+    "StartTime": "09:00:00",
+    "EndTime": "17:00:00",
+    "Place": "ETF Beograd",
+    "About": "Kreiraj svoju buducnost!"
+  	}
+	],
+    "Locations": [
+		{
+			"Place": "ETF Beograd",
+			"Location": [
+				{
+					"Name": "Amfiteatar 56"
+				},
+				{
+					"Name": "Amfiteatar 65"
+				},
+				{
+					"Name": "Laboratorija 60"
+				},
+				{
+					"Name": "Svecana sala - Arhitektura"
+				},
+				{
+					"Name": "Ucionica 310"
+				},
+				{
+					"Name": "Ucionica 311"
+				}
+			]
+		}
+	]
+}

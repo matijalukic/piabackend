@@ -74,5 +74,11 @@ router.get('/forbidpermit', AdminController.forbidPermitValidation, AdminControl
 // list permits of the fair
 router.get('/fair/permits', AdminController.permitsValidation, AdminController.permitsOfFair);
 
+// insert new location of the fair
+router.get('/fair/location/insert', AdminController.newLocationValidation, AdminController.newLocation);
+
+// edit fair
+router.post('/fair/edit', bodyParser.json(), AdminController.editFairValidation, AdminController.editFair);
+
 // export router 
 module.exports = router;

@@ -1,0 +1,76 @@
+{
+	"Packages": [
+	   {
+		  "Title": "Generalni pokrovitelj",
+		  "Content": [ "Stand 4x velicine", "Logo i 2 strane u boji u brosuri", "Logo na promo majicama trostruke velicine"],
+		  "VideoPromotion": 15,
+		  "NoLessons": 2,
+		  "NoWorkchops": 1,
+		  "NoPresentation": 0,
+		  "Price": 30000,
+		  "MaxCompanies": 1
+	   },
+	   {
+		  "Title": "Zlatni pokrovitelj",
+		  "Content": [ "Stand 3x velicine", "Logo i 2 strane u boji u brosuri", "Logo na promo majicama 3x velicine"],
+		  "VideoPromotion": 10,
+		  "NoLessons": 1,
+		  "NoWorkchops": 1,
+		  "NoPresentation": 1,
+		  "Price": 25000,
+		  "MaxCompanies": 1
+	   },
+	   {
+		  "Title": "Srebrni pokrovitelj",
+		  "Content": [ "Stand 2x velicine", "Logo i 2 strane u boji u brosuri", "Logo na promo majicama 2x velicine"],
+		  "VideoPromotion": 5,
+		  "NoLessons": 1,
+		  "NoWorkchops": 0,
+		  "NoPresentation": 1,
+		  "Price": 20000,
+		  "MaxCompanies": 2
+	   },
+	   {
+		  "Title": "Bronzani pokrovitelj",
+		  "Content": [ "Stand 2x velicine", "Logo i 1 strane u boji u brosuri", "Logo na promo majicama standardne velicine"],
+		  "VideoPromotion": 3,
+		  "NoLessons": 1,
+		  "NoWorkchops": 0,
+		  "NoPresentation": 0,
+		  "Price": 15000,
+		  "MaxCompanies": 3
+	   },
+	   {
+		  "Title": "Standardni paket",
+		  "Content": [ "Stand 1x velicine", "Logo i osnovne info u brosuri"],
+		  "VideoPromotion": 0,
+		  "NoLessons": 0,
+		  "NoWorkchops": 0,
+		  "NoPresentation": 0,
+		  "Price": 10000,
+		  "MaxCompanies": "-"
+	   }
+	],
+	"Additional": [
+		{
+			"Title": "Flajer u brosuri",
+			"Price": 4000
+		},
+		{
+			"Title": "Prednja unutrasnja korica brosure",
+			"Price": 2000
+		},
+		{
+			"Title": "Dodatna strana u boji u brosuri",
+			"Price": 3000
+		},
+		{
+			"Title": "Doplata za brendiranje standa",
+			"Price": 5000
+		},
+		{
+			"Title": "Dodatna rezentacija kompanije u trajanju 45min",
+			"Price": 10000
+		}
+	  ]
+}

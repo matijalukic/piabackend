@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config.json');
 const app = express();
 const StudentController = require('../controllers/StudentController.js');
+const LoginController = require('../controllers/LoginController.js');
 
 var router = express.Router();
 
@@ -11,12 +12,12 @@ var router = express.Router();
 router.use(StudentController.authorization);
 
 // find companies
-router.get('/findcompany', StudentController.findCompany);
+router.get('/findcompany', LoginController.findCompany);
 // find job
 router.get('/findjob', StudentController.findJob);
 
 // apply for job
-router.post('/job/apply', bodyParser.raw({type:'application/pdf'}), StudentController.jobApplyValidation, StudentController.jobApply);
+router.post('/job/apply', bodyParser.raw({type:'application/pdf', limit: '50mb'}), StudentController.jobApplyValidation, StudentController.jobApply);
 
 // find application with student_id and job_id
 router.get('/findapplication', StudentController.findApplicationValidation, StudentController.findApplication);
@@ -26,6 +27,9 @@ router.get('/myapplications', StudentController.myapplications);
 
 // rate the application
 router.get('/application/rate', StudentController.rateApplicationValidation, StudentController.rateApplication);
+
+// set students cv
+router.post('/leavecv', bodyParser.json(), StudentController.leaveCV);
 
 // export router 
 module.exports = router;

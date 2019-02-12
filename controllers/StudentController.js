@@ -91,50 +91,7 @@ module.exports.authorization = function(req, res, next){
 	}
 }
 
-/**
- * Find companies by multiple criteria
- */
-module.exports.findCompany = async(req, res) => {
-	try{
-		let whereConditions = {};
 
-		// by name
-		if(req.query.name) whereConditions.name = {
-			[Op.like]: '%' + req.query.name + '%'
-		};
-		// by city
-		if(req.query.city) whereConditions.city = {
-			[Op.like]: req.query.city
-		};
-
-		// by employees min
-		if(req.query.min_employees) 
-			whereConditions.employees = {
-				[Op.gte] : req.query.min_employees
-			};
-		if(req.query.max_employees) 
-			whereConditions.employees = {
-				[Op.lte] : req.query.max_employees
-			};
-
-		// by agency
-		if(req.query.agency)
-		whereConditions.agency = req.query.agency;
-
-		let filteredCompanies = await Company.findAll({ 
-			where: whereConditions,
-			limit: 15,
-			include: [Job],
-		});
-
-		res.json(filteredCompanies);
-	}
-	catch(e){
-		res.status(403).json({errorMessage: e});
-	}
-
-
-}
 
 
 /**
@@ -214,6 +171,14 @@ module.exports.jobApplyValidation = [
 ];
 
 
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
 module.exports.jobApply = async (req, res) => {
 	try{
 		const errors = validationResult(req);
@@ -221,12 +186,20 @@ module.exports.jobApply = async (req, res) => {
 			throw errors.array().map((val) => val.msg).join('\n');
 		}
 
-		let errorMessage = null;
 		let fileName = null; // file name of the uploaded file
+
+		let applingStudent = await Student.findByPk(req.query.student_id);
+		if(!applingStudent || applingStudent.cv == null) throw "You didnt leave CV to apply for a job!";
 
 
 		fileName = 'student_' + req.query.student_id + '_job_' + req.query.job_id + '.pdf';
 		fs.writeFileSync('./pdfs/' + fileName, req.body);
+
+		if(isEmpty(req.body)){
+			fileName = null;
+		}
+
+		console.log(req.body);
 
 
 		Job.findOne({ where: { id: req.query.job_id}})
@@ -254,6 +227,7 @@ module.exports.jobApply = async (req, res) => {
 			
 	}
 	catch(e){
+		console.log(e);
 		res.status(403).json({ errorMessage: e });
 	}
 
@@ -435,4 +409,22 @@ module.exports.rateApplication = async (req,res) => {
 	}
 
 
+}
+
+module.exports.leaveCV = async (req, res) => {
+	try{
+		let foundedUser = await LoginController.tokenToUser(req.headers.authorization);
+		if(!foundedUser) throw "There is no founded user";
+
+		let foundedStudent = await Student.findByPk(foundedUser.id);
+		if(!foundedStudent) throw "There is no founded student!";
+
+		foundedStudent.cv = req.body.cv;
+		foundedStudent.save();
+
+		res.json({ successMessage: "The CV has been set!" });
+	}
+	catch(e){
+		res.status(403).json({ errorMessage: e });
+	}
 }

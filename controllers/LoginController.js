@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const jwt = require('jsonwebtoken');
 const config = require('../config.json');
 const users = require('../models/users.js');
@@ -10,6 +11,7 @@ const fairs = require('../models/fairs.js');
 const permits = require('../models/permits.js');
 const packages = require('../models/packages.js');
 const locations = require('../models/locations.js');
+const jobs = require('../models/jobs.js');
 const { check, body, validationResult } = require('express-validator/check');
 
 
@@ -24,6 +26,10 @@ const Fairs = new fairs(sequelize, Sequelize);
 const Packages = new packages(sequelize, Sequelize);
 const Permits = new permits(sequelize, Sequelize);
 const Location = new locations(sequelize, Sequelize);
+const Job = new jobs(sequelize, Sequelize);
+
+// Relationships
+Company.hasMany(Job, {foreignKey: 'company_id'});
 
 
 /**
@@ -226,12 +232,67 @@ module.exports.countEmail = async (req, res) => {
 }
 
 
+function validPassword(password){
+    if(password.length < 8 || password.length > 12)
+        return "Password must be 8-12 characters length.";
+
+    let specChars = ['#', '*', '.', '!', '?', '$'];
+
+    let numUpperCase = password.length - password.replace(/[A-Z]/g, '').length;  
+    let numLowerCase = password.length - password.replace(/[a-z]/g, '').length;  
+    let numDigits = password.length - password.replace(/[0-9]/g, '').length;  
+
+    console.log(`${password} ${numUpperCase} num of uppercase letters`);
+
+    if(numUpperCase < 1) 
+        return "It must have at least one uppercase letter!"; 
+
+    if(numLowerCase < 3)
+        return "It must have at least three lowercase characters!";
+        
+    if(numDigits < 1)
+        return "It must have at least one digit!";
+
+    // check if has one of the spec chars
+    let numSpecChars = 0; 
+    for(let specChar of specChars){
+        if(password.indexOf(specChar) !== -1){
+            numSpecChars++;
+        }
+    }
+
+    if(numSpecChars < 1)
+        return "It must have at least one special char!";
+
+    // first char must be letter
+    let firstChar = password.charAt(0);
+    if(firstChar.toLowerCase() == firstChar.toUpperCase())
+        return "Password must start with the letter!";
+
+    // two consecutive
+    if(/(.)\1/.test(password))
+        return "Password cant have two consecutive chars!";
+
+
+    return true; 
+}
+
 /**
  * Sending the users
  */
 module.exports.register = async (req, res) => {
     try{
-        console.log(req.body);
+        let userWithSameUsername = Users.findOne({
+            where: {
+                username: req.body.user.username
+            }
+        });
+
+        if(userWithSameUsername) throw "There is already user with that username!";
+
+        let reason;
+        if((reason = validPassword(req.body.user.password)) !== true) throw reason;
+
         let creatingUser = await Users.create(req.body.user);
 
         if(!creatingUser) throw "We havent created a user!";
@@ -305,8 +366,11 @@ module.exports.changePassword = async (req, res) => {
 
         // check if old password is invalid
         if(userChanging.password != req.query.old_password) throw "Old password is invalid!";
-        
-             
+
+        let reason;
+        if((reason = validPassword(req.query.new_password)) !== true)
+            // throw `Password is not valid! Length must be from 8 to 12 characters! It has to have at least one uppercase letter, 3 lowercase letters, 1 special char(#*.!?$), to start with letter and can't have two consecutive letters!`;
+            throw reason;   
         // find user
         userChanging.password = req.query.new_password;
         userChanging.save();
@@ -333,8 +397,8 @@ module.exports.latestFair = async ( req, res ) => {
     try{
         // get latest fair
         let lastFair = await Fairs.findOne({
-            order: [['start', 'DESC'] ] ,
-            include: [{ model: Permits, where: {allowed: true}}, Packages, Company, Location]
+            order: [['start', 'DESC']] ,
+            include: [{ model: Permits, where: {allowed: true}, required: false}, Packages, Company, Location]
         });
 
         res.json(lastFair);
@@ -353,7 +417,7 @@ module.exports.findFair = async ( req, res ) => {
         let lastFair = await Fairs.findOne({
             where: { id: req.params.id}, 
             order: [['start', 'DESC'] ] ,
-            include: [Permits, Packages, Company, Location]
+            include: [{ model: Permits, where: {allowed: true}, required: false}, Packages, Company, Location]
         });
 
         res.json(lastFair);
@@ -361,4 +425,51 @@ module.exports.findFair = async ( req, res ) => {
     catch(e){
         res.status(403).json({ errorMessage: e});
     }
+}
+
+
+/**
+ * Find companies by multiple criteria
+ */
+module.exports.findCompany = async(req, res) => {
+	try{
+		let whereConditions = {};
+
+		// by name
+		if(req.query.name) whereConditions.name = {
+			[Op.like]: '%' + req.query.name + '%'
+		};
+		// by city
+		if(req.query.city) whereConditions.city = {
+			[Op.like]: req.query.city
+		};
+
+		// by employees min
+		if(req.query.min_employees) 
+			whereConditions.employees = {
+				[Op.gte] : req.query.min_employees
+			};
+		if(req.query.max_employees) 
+			whereConditions.employees = {
+				[Op.lte] : req.query.max_employees
+			};
+
+		// by agency
+		if(req.query.agency)
+		whereConditions.agency = req.query.agency;
+
+		let filteredCompanies = await Company.findAll({ 
+			where: whereConditions,
+			limit: 15,
+			include: [Job],
+		});
+
+		res.json(filteredCompanies);
+	}
+	catch(e){
+        console.log(e);
+		res.status(403).json({errorMessage: e});
+	}
+
+
 }

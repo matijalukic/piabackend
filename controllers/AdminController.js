@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const IncomingForm = require('formidable').IncomingForm;
 const fs = require('fs');
-const { check, validationResult } = require('express-validator/check');
+const { check, validationResult, body } = require('express-validator/check');
 const { sanitize } = require('express-validator/filter');
 
 
@@ -113,11 +113,10 @@ module.exports.newfair = async function(req, res){
 			}
 
 			if(newFair)
-				res.status(200).json(
-					{
-						newInsertedFair: newFair,  
-						successMessage: 'The Fair has been created!'
-					});
+				res.status(200).json({
+					newInsertedFair: newFair,  
+					successMessage: 'The Fair has been created!'
+				});
 			else 
 				res.status(403).json({errorMessage: 'The Fairs has not been inserted'});
 		}
@@ -382,6 +381,53 @@ module.exports.uploadImage = function(req, res){
 } 
 
 /**
+ * GET request for new location
+ */
+module.exports.newLocationValidation = [
+	check('fair_id', 'There is no selected fair!').exists(),
+	check('name', 'There is no location').exists()
+];
+
+module.exports.newLocation = async (req, res) => {
+	try{
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			throw errors.array()[0].msg;
+		}
+
+		let fairOfLocation = Fair.findByPk(req.query.fair_id);
+
+		if(!fairOfLocation) throw "There is no fair under this id!";
+
+		// check if there is lookalike Location
+		let sameLocation = await Location.findOne({ 
+			where:
+			{
+				name: req.query.name,
+				fair_id: req.query.fair_id
+			}
+		});
+		if(sameLocation) throw "There is already location under that name!";
+
+		// insert location
+		let insertedLocation = await Location.create({
+			name: req.query.name,
+			fair_id: req.query.fair_id
+		});
+
+		if(!insertedLocation) throw "The locations has not been inserted!";
+
+		res.json({successMessage: "The locations has been inserted!", location: insertedLocation});
+	}
+	catch(e){
+		console.log(e);
+		res.status(403).json({ errorMessage: e});
+	}
+
+
+}
+
+/**
  * GET request for allowing company permits
  */
 module.exports.allowPermitValidation = [
@@ -487,6 +533,39 @@ module.exports.permitsOfFair = async (req, res) => {
 		});
 
 		res.json(permitsOfFair);
+	}
+	catch (e) {
+		res.status(403).json({errorMessage: e});
+	}
+
+}
+
+
+module.exports.editFairValidation = [
+	body('id', 'The fair is not set!').exists(),
+	body('start', 'Start date is not valid').exists().isISO8601(),
+	body('end', 'End date is not valid').exists().isISO8601(),
+	body('startCV', 'Start CV date is invalid').optional({checkFalsy: true}).isISO8601(),
+	body('endCV', 'End CV date is invalid').optional({checkFalsy: true}).isISO8601(),
+	body('startParticipate', 'Start Participate date is invalid').optional({checkFalsy: true}).isISO8601(),
+	body('endParticipate', 'End Participate CV date is invalid').optional({checkFalsy: true}).isISO8601(),
+]
+
+module.exports.editFair = async (req, res) => {
+	try{
+		// check for errors
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			throw errors.array()[0].msg;
+		}
+
+		let findFair = await Fair.findByPk(req.body.id);
+		if(!findFair) throw "We have not founded your fair!";
+
+		// from body to the db
+		findFair.update(req.body);
+
+		res.json({ successMessage: "The Fair has been changed!"});
 	}
 	catch (e) {
 		res.status(403).json({errorMessage: e});

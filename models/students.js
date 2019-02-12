@@ -8,6 +8,10 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true,
       autoIncrement: true
     },
+    cv: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     years: {
       type: DataTypes.INTEGER(10).UNSIGNED,
       allowNull: false,
@@ -17,6 +21,14 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(3).UNSIGNED,
       allowNull: false,
       defaultValue: '0'
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'students'

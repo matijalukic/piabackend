@@ -12,7 +12,8 @@ Fair.hasMany(Location, { foreignKey: 'fair_id' });
 module.exports.fairs = (req, res) => {
     try {
         Fair.findAll({
-            include: [Location]
+            include: [Location],
+            order: [['start', 'DESC']]
         })
             .then((fairs) => {
                 res.status(200).json(fairs);
